@@ -175,6 +175,20 @@ fun is_three x =
     if x = 3 then "yes" and "no"
 
 (*Nested Patterns*)
+(*pattern-matching takes pattern p and value v
+if p is variablex, the match succeeds and x is bound to v.
+if p is _, the match succeeds and no bindings are introduced.
+if p is (p1, ..., pn) and v is (v1, ..., vn), the match succeeds if and only if
+pn matches vn. 
+The bindings are the union of all bindings from the submatches.
+if p is constructor p1, the match succeeds if v1 is a value build with the same constructor
+*)
+
+(*
+a :: b :: c :: d matches all lists with >= 3 elements.
+a :: b :: c :: [] matches all lists with 3 elements.
+((a,b), (c,d)) :: e matches all non-empty lists of pairs of pairs.
+*)
 
 (* Avoid nested case expressions if nested patterns are simpler
 and avoid unnecessary branches or let-expressions*)
@@ -226,3 +240,48 @@ fun len xs =
     case xs of
         [] => 0
     |   _ :: xs' => 1 + len xs'
+
+(*Function patterns*)
+fun eval (Constant i) = i
+  | eval (Negate e2) = ~ (eval e2)
+  | eval (Add (e1, e2)) = (eval e1) + (eval e2)
+  | eval (Multiply(e1, e2)) = (eval e1) * (eval e2)
+
+fun f p1 = e1
+  | f p2 = e2
+  ...
+  | f pn = en
+
+(*Exceptions*)
+
+fun hd xs = 
+    case xs of
+        [] => raise List.Empty
+    |   x::_ => x
+
+exception MyUndesirableCondition
+
+exception MyOtherException of int * int
+
+fun mydiv (x, y) = 
+    if y = 0
+    then raise MyUndesirableCondition
+    else x div y
+
+fun maxlist(xs, ex) =  (* int list * exn -> int *)
+    case xs of
+        [] => raise ex
+    |   x :: [] => x
+    |   x :: xs' => Int.max(x, maxlist(xs', ex))
+
+val w = maxlist ([3, 4, 5], MyUndesirableCondition)
+
+val x = maxlist ([3, 4, 5], MyUndesirableCondition)
+        handle MyUndesirableCondition => 42
+
+val z = maxlist ([], MyUndesirableCondition)
+        handle MyUndesirableCondition => 42
+
+(*Tail Recursion
+-Using an accumulator to achieve tail recursion
+*)

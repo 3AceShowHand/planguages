@@ -284,4 +284,62 @@ val z = maxlist ([], MyUndesirableCondition)
 
 (*Tail Recursion
 -Using an accumulator to achieve tail recursion
+The result of recursive calls is the result for the caller.
+
+- Create a helper function that takes an accumulator
+- Old base case becomes initial accumulator.
+- New base case becomes final accumulator.
+
 *)
+fun fact n =
+    let fun aux(n, acc) = 
+        if n = 0
+        then acc
+        else aux(n - 1, acc * n)
+
+    in 
+        aux(n, 1)
+    end
+    
+val x = fact 3
+
+fun sum xs = 
+    let fun aux (xs, acc) = 
+        case xs of
+            [] => acc
+        |   x :: xs' => aux(xs', acc + x)
+    in
+        aux(xs, 0)
+    end
+
+fun rev xs = 
+    case xs of
+        [] => []
+    |   x :: xs' => (rev xs') @ [x] (*beware of list-append, especially within outer recursion.*)
+
+fun rev2 xs = 
+    let fun aux(xs, acc) = 
+        case xs of
+            [] => acc
+        |   x :: xs' => aux(xs', x :: acc)
+    in
+        aux(xs, [])
+    end
+
+(* A tail call is a function call in tail position
+- In fun f p = e, the body e is in tail position
+- If e1 then e2 else e3 is in tail position, then e2 and e3 are in tail position.
+- if let b1, ..., bn in e end is in tail position, then e is in tail position.
+- Function-call argument e1 e2 are not in tail position.
+ *)
+
+fun doIt q = 
+    case q of
+        [] => A   (* Tail call *)
+    |   x :: xs => if B
+                   then C    (* Tail call *)
+                   else let 
+                            val res = D
+                        in 
+                            E :: xs  
+                        end    

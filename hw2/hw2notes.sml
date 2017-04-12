@@ -1,10 +1,10 @@
 (*Building Compound Types*)
 val x = { bar=(1+2, true andalso true) , foo=3+4, baz=(false, 9) }
-val niece = { name="Ameilia", id=422123}
+val niece = { name="Ameilia", id=422123 }
 val name = #name niece
 
 (*Tuples as Syntactic sugar*)
-val y = { 3="hi", 1=true, 2=3+2}
+val y = { 3="hi", 1=true, 2=3+2 }
 
 (*Datatype bindings*)
 (*Any value of type mytype is made from one of the constructors.*)

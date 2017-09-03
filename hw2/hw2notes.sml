@@ -1,16 +1,24 @@
-(*Building Compound Types*)
-val x = { bar=(1+2, true andalso true) , foo=3+4, baz=(false, 9) }
-val niece = { name="Ameilia", id=422123 }
-val name = #name niece
+(*In any language, there are 3 most important type.
+- Each of : A t value contains values of each ot t1, t2 ... tn
+- One of: A t value contains values of one of t1, t2 ... tn
+- Self reference: A t value can refer to other t values
+*)
 
-(*Tuples as Syntactic sugar*)
+(*Building Compound Types*)
+
+(* Records: A way to build and use each-of types *)
+val x = { bar=(1+2, true andalso true) , foo=3+4, baz=(false, 9) }
+val niece = { name="Amelia", id=422123 }
+val name = #name niece
+(*Tuples as Syntactic sugar, just another easier way to represent Record type.*)
 val y = { 3="hi", 1=true, 2=3+2 }
 
-(*Datatype bindings*)
-(*Any value of type mytype is made from one of the constructors.*)
+
+(* Datatype bindings: A way to build and use one-of types *)
+(* Any value of type mytype is made from one of the constructors.*)
 datatype mytype = TwoInts of int * int
-                | Str of string
-                | Pizza
+                   | Str of string
+                   | Pizza
 
 val a = Str "hi"
 val b = Str
@@ -22,57 +30,70 @@ val e = a
 1. Check what variant it is(what constructor made it)
 2. Extract the data (if that variant has any)
 *)
-(*Case expression*)
 
-fun f x = 
+(*Case expression*)
+(* mytype -> int *)
+(* Type-checking: all branches must have same type *)
+fun f (x : mytype) = 
     case x of
          Pizza => 3
-       | Str s => 8
+       | Str s => String.size s
        | TwoInts(i1, i2) => i1 + i2
 
 f Pizza
 f (Str "hi")
 
 (*Useful Datatypes*)
+(* Enumerations *)
 datatype suit = Club | Diamond | Heart | Spade
 datatype rank = Jack | Queen | King | Ace | Num of int
 
 datatype id = StudentNum of int
-            | Name of string * (string option) * string
+              | Name of string * (string option) * string
 
 (*self-reference*)
 datatype exp = Constant of int
-             | Negate   of exp
-             | Add      of exp * exp
-             | Multiply of exp * exp
-             
-Add(Constant (10+9), Negate(Constant 4))
+                | Negate   of exp
+                | Add       of exp * exp
+                | Multiply of exp * exp
 
-fun eval e = 
+val example_exp : exp = Add(Constant (10+9), Negate(Constant 4))
+
+fun eval e =
     case e of
-            Constant i => i
-       |    Negate e2 => ~(eval e2)
-       |    Add(e1, e2) => (eval e1) + (eval e2)
-       |    Multiply(e1, e2) => (eval e1) * (eval e2)
+            Constant i        => i
+          | Negate e2         => ~ (eval e2)
+          | Add(e1, e2)       => (eval e1) + (eval e2)
+          | Multiply(e1, e2) => (eval e1) * (eval e2)
 
-fun number_of_adds e = 
-    case e of 
+val example_eval : int = eval example_exp
+
+fun number_of_adds e = (* exp -> int *)
+    case e of
             Constant i => 0
-        |   Negate e2 => (number_of_adds e2)
-        |   Add(e1, e2) => 1 + (number_of_adds e1) + (number_of_adds e2)
-        |   Multiply(e1, e2) => (number_of_adds e1) + (number_of_adds e2)
+          | Negate e2  => (number_of_adds e2)
+          | Add(e1, e2) => 1 + (number_of_adds e1) + (number_of_adds e2)
+          | Multiply(e1, e2) => (number_of_adds e1) + (number_of_adds e2)
+
+val example_addcount : int = number_of_adds (Multiply(example_exp, example_exp))
 
 fun max_constant e = 
     let fun max_of_two(e1, e2) = 
         Int.max(max_constant e1, max_constant e2)
     in
     case e of 
-        Constant i => i
-    |   Negate e2 => max_constant e2
-    |   Add(e1, e2) => max_of_two(e1, e2)
-    |   Multiply(e1, e2) => max_of_two(e1, e2)
+      Constant i => i
+    | Negate e2 => max_constant e2
+    | Add(e1, e2) => max_of_two(e1, e2)
+    | Multiply(e1, e2) => max_of_two(e1, e2)
     end
 
+fun max_constant2 e = 
+    case e of
+      Constant i => i
+    | Negative e2 => max_constant2 e2
+    | Add (e1,e2) => Int.max(max_constant2 e1, max_constant2 e2)
+    | Multiply (e1, e2) => Int.max(max_constant2 e1, max_constant2 e2)
 
 
 val test_exp = Add(Constant 19, Negate(Constant 4))
@@ -81,9 +102,9 @@ val nineteen = max_constant test_exp
 (*Type Synonyms*)
 type card = suit * rank
 type name_record = { StudentNum: int option,
-                     first     : string,
-                     middle    : string option,
-                     last      : string}
+                        first: string,
+                        middle: string option,
+                        last: string}
 
 fun is_Queen_of_Spade(c: card) = 
     #1 c = Spade andalso #2 c = Queen
@@ -94,11 +115,10 @@ val c3 = (Spade, Ace)
 
 fun is_Queen_of_Spade2 c = 
     case c of
-        (Spade, Queen) => true
-    | _=> false
+      (Spade, Queen) => true
+    | _ => false
 
 (*Lists and Options are datatypes*)
-
 datatype mylist = Empty
                 | Cons of int * mylist
 
@@ -106,41 +126,62 @@ val x = Cons(4, Cons(23, Cons(2009, Empty)))
 
 fun append_list(xs, ys) = 
     case xs of
-        Empty => ys
-    |   Cons(x, xs') => Cons(x, append_list(xs', ys))
+      Empty => ys
+    | Cons(x, xs') => Cons(x, append_list(xs', ys))
 
+(* NONE and SOME are constructors, which can be used to build values 
+, or use in pattern matching. *)
 fun inc_or_zero intoption = 
     case intoption of 
-        NONE => 0
-    |   SOME i => i+1
+      NONE => 0
+    | SOME i => i+1
 
 fun sum_list xs = 
     case xs of
-        [] => 0
+      [] => 0
     | x::xs' => x + sum_list xs'
 
 fun append (xs, ys) =
     case xs of 
-        [] => ys
-    |   x::xs' => x::append(xs', ys)
+      [] => ys
+    | x::xs' => x::append(xs', ys)
 
+(* 
+* Pattern-matching is better for options and lists for the 
+same reasons as for all datatypes
+*)
 
 (*Polymorphic Datatypes*)
 datatype 'a option = NONE | SOME of 'a
-datatype 'a mylist = Empty | Cons OF 'a * 'a mylist
+datatype 'a mylist = Empty | Cons of 'a * 'a mylist
 
 datatype ('a, 'b) tree = Node of 'a * ('a, 'b) tree * ('a, 'b) tree
                        | Leaf of 'b
+
 (*type is (int, int) tree -> int*)
 fun sum_tree tr = 
     case tr of
         Leaf i => i
     |   Node(i, left, right) => i + sum_tree left + sum_tree right
 
+(* type is ('a, int) tree -> int *)
 fun sum_leaves tr = 
     case tr of
         Leaf i => i
     |   Node(i, left, right) => sum_leaves left + sum_leaves right
+
+fun num_leaves tr = 
+    case tr of
+        Leaf i => 1
+      | None(i, left, right) => num_leaves left + num_leaves right
+
+
+(* flower type can hold no data on its internal nodes, but each leaf
+can hold one of two different types of data.*)
+datatype ('a, 'b) flower = 
+    Node of ('a, 'b) flower * ('a, 'b) flower
+    | Leaf of 'a
+    | Petal of 'b
 
 (*Eevery val-binding and function-binding uses pattern-matching
   Every function in ML takes exactly one argument*)

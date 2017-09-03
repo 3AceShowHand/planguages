@@ -183,20 +183,47 @@ datatype ('a, 'b) flower =
     | Leaf of 'a
     | Petal of 'b
 
-(*Eevery val-binding and function-binding uses pattern-matching
-  Every function in ML takes exactly one argument*)
+(*
+* Every val-binding and function-binding uses pattern-matching
+* Every function in ML takes exactly one argument
+*)
 
-(*A litter type reference*)
-fun sum_triple (x, y, z) = 
+(* Val-binding can use a pattern, not just a variable.
+ Turns out variables are just one kind of pattern. *)
+
+
+(* Bad styles*)
+fun sum_triple1 triple = 
+    case triple of 
+        (x, y, z) => x + y + z
+
+fun full_name r = 
+    case r of 
+        {first=x, middle=y, last=z} => x ^ " " ^ y ^ " " ^ z
+
+fun sum_triple1 triple = 
+    let val (x, y, z) = triple
+    in
+        x + y + z
+    end
+
+(* A function argument can also be a pattern *)
+(* Every function in ML takes one argument, not many.*)
+fun sum_triple2 (x, y, z) = 
     x + y + z
 
-(* int*'a*int->int *)
+(* A litter type reference *)
+(* Type-checker can use patterns to figure out the types *)
+
+(* These functions are polymorphic: type of y can be anything *)
+(* int * 'a * int -> int *)
 fun partial_sum (x, y, z) = 
     x + z
 
 (*Polymorphic and Equality Types*)
 
 (* 'a list * 'a list -> 'a list *)
+(* 'a can be any type *)
 fun append(xs, ys) = 
     case xs of
         [] => ys
@@ -235,20 +262,20 @@ a :: b :: c :: [] matches all lists with 3 elements.
 and avoid unnecessary branches or let-expressions*)
 exception ListLengthMismatch
 
-fun zip3 list_triple = 
-    case list_triple of
+fun zip3 lst_triple = 
+    case lst_triple of
         ([], [], []) => []
-    |   (hd1::tl1, hd2::tl2, hd3:: tl3) => (hd1, hd2, hd3)::zip3(tl1, tl2, tl3)
-    |   _ => raise ListLengthMismatch
+      | (hd1::tl1, hd2::tl2, hd3:: tl3) => (hd1, hd2, hd3)::zip3(tl1, tl2, tl3)
+      | _ => raise ListLengthMismatch
 
 fun unzip3 lst = 
     case lst of
         [] => ([], [], [])
-    |   (a, b, c) :: tl => let 
-                                val (l1, l2, l3) = unzip3 tl
-                            in
-                                (a::l1, b::l2, c::l3)
-                            end
+      | (a, b, c) :: tl => let 
+                              val (l1, l2, l3) = unzip3 tl
+                          in
+                              (a::l1, b::l2, c::l3)
+                          end
 
 zip3 ([1, 2, 3], [4, 5, 6], [7, 8, 9])
 unzip3[(1, 4, 7), (2, 5, 8), (3, 6, 9)]
@@ -258,29 +285,31 @@ unzip3[(1, 4, 7), (2, 5, 8), (3, 6, 9)]
 fun nondecreasing xs =
     case xs of
         [] => true
-    |   _ :: [] => true
-    |   head :: (neck :: rest) => head <= neck andalso nondecreasing (neck :: rest)
+      | _ :: [] => true
+      | head :: (neck :: rest) => head <= neck 
+                                      andalso nondecreasing (neck :: rest)
 
 datatype sng = P | N | Z
 
 fun multsign (x1, x2) = 
     let 
         fun sign x = 
-            if x = 0 then Z else if x > 0 then P else N
+            if x = 0 then Z 
+                      else if x > 0 then P else N
     in
         case (sign x1, sign x2) of
             (Z, _) => Z
-        |   (_, Z) => Z
-        |   (P, P) => P
-        |   (N, N) => P
-        (*_ matches all others cases.*)
-        |   _ => N
+          | (_, Z) => Z
+          | (P, P) => P
+          | (N, N) => P
+          (*_ matches all others cases.*)
+          | _ => N
     end
 
 fun len xs =
     case xs of
         [] => 0
-    |   _ :: xs' => 1 + len xs'
+      | _ :: xs' => 1 + len xs'
 
 (*Function patterns*)
 fun eval (Constant i) = i

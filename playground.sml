@@ -12,3 +12,6 @@ fun sum_lst(xs) =
     case xs of
           [] => 0.0
         | x::xs' => x + sum_lst(xs')
+
+fun same_thing(x, y) = 
+    if x = y then "yes" else "no"

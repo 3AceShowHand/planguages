@@ -34,4 +34,5 @@ exception IllegalMove
 
 (* put your solutions for problem 2 here *)
 (* Do not use isSome, valOf, null, hd, tl in this homework *)
-
+(* Do not use the # character *)
+(* Do not need to write down any explicit types*)

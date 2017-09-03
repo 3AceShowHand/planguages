@@ -311,19 +311,46 @@ fun len xs =
         [] => 0
       | _ :: xs' => 1 + len xs'
 
+(* Nested Patterns Precisely
+* If p is a variable x, the match succeeds and x is bound to v
+* If p is _, the match succeeds and no bindings are introduced
+* If p is (p1, ..., pn) and v is (v1, ..., vn), the match succeeds
+if and only if p1 matches v1, ..., pn matches vn. The bindings are the
+union of all bindings from the submatches
+* If p is 'C p1', the match succeeds if v is 'C v1' and p1 matches v1. 
+(The same constructor). The bindings are the bindings from the submatch. *)
+
 (*Function patterns*)
 fun eval (Constant i) = i
   | eval (Negate e2) = ~ (eval e2)
   | eval (Add (e1, e2)) = (eval e1) + (eval e2)
   | eval (Multiply(e1, e2)) = (eval e1) * (eval e2)
 
+fun eval e =
+    case e of
+            Constant i        => i
+          | Negate e2         => ~ (eval e2)
+          | Add(e1, e2)       => (eval e1) + (eval e2)
+          | Multiply(e1, e2)  => (eval e1) * (eval e2)
+
+fun append([], ys) = ys
+  | append(x::xs', ys) = x :: append(xs', ys)
+
+(* In general
+fun f x = 
+    case x of
+        p1 => e1
+      | p2 => e2
+      ...
+Can be written as
+
 fun f p1 = e1
   | f p2 = e2
   ...
   | f pn = en
+*)
 
 (*Exceptions*)
-
 fun hd xs = 
     case xs of
         [] => raise List.Empty
@@ -332,12 +359,19 @@ fun hd xs =
 exception MyUndesirableCondition
 
 exception MyOtherException of int * int
+raise MyOtherException(3, 4)
 
 fun mydiv (x, y) = 
     if y = 0
     then raise MyUndesirableCondition
     else x div y
 
+(* exn: type of all exceptions *)
+(* 
+* Declaring an exception makes adds a constructor for type exn
+* Can pass values of exn anywhere
+* Handle can have multiple branches with patterns for type exn
+ *)
 fun maxlist(xs, ex) =  (* int list * exn -> int *)
     case xs of
         [] => raise ex
@@ -359,7 +393,6 @@ The result of recursive calls is the result for the caller.
 - Create a helper function that takes an accumulator
 - Old base case becomes initial accumulator.
 - New base case becomes final accumulator.
-
 *)
 fun fact n =
     let fun aux(n, acc) = 

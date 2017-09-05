@@ -15,8 +15,8 @@ fun all_except_option (str, str_lst) =
     case str_lst of
         [] => NONE
       | head::tail => if same_string(head, str)
-                      then SOME tail
-                      else case all_except_option(str, tail) of
+                        then SOME tail
+                        else case all_except_option(str, tail) of
                                NONE => NONE
                              | SOME xs => SOME (head::xs)
                              
@@ -33,3 +33,6 @@ datatype move = Discard of card | Draw
 exception IllegalMove
 
 (* put your solutions for problem 2 here *)
+(* Do not use isSome, valOf, null, hd, tl in this homework *)
+(* Do not use the # character *)
+(* Do not need to write down any explicit types*)

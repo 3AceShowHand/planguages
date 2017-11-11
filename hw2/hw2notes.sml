@@ -244,7 +244,7 @@ fun is_three x =
 
 (*Nested Patterns*)
 (*pattern-matching takes pattern p and value v
-if p is variablex, the match succeeds and x is bound to v.
+if p is variable, the match succeeds and x is bound to v.
 if p is _, the match succeeds and no bindings are introduced.
 if p is (p1, ..., pn) and v is (v1, ..., vn), the match succeeds if and only if
 pn matches vn. 

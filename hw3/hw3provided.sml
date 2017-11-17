@@ -111,16 +111,18 @@ fun count_some_var (str, p) =
 
 fun check_pat p =
 	let 
-		fun get_var_names p = case p of
-									Wildcard => []
-								   |Variable (x) => [x]
-								   |TupleP p => List.foldl (fn (sub, prev) => (get_var_names sub) @ prev) [] p
-								   |ConstructorP(str, pat) => get_var_names pat
-								   |_ => []
+		fun get_var_names p =
+			case p of
+				Wildcard => []
+				|Variable (x) => [x]
+				|TupleP p => List.foldl (fn (sub, prev) => (get_var_names sub) @ prev) [] p
+				|ConstructorP(str, pat) => get_var_names pat
+				|_ => []
 
-		fun is_repeat lst = case lst of
-									[] => true
-								   |x::xs => if List.exists (fn str => x = str) xs then false else is_repeat xs
+		fun is_repeat lst = 
+			case lst of
+				[] => true
+				|x::xs => if List.exists (fn str => x = str) xs then false else is_repeat xs
 	in
 		is_repeat (get_var_names p)
 	end

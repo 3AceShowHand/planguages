@@ -14,18 +14,42 @@
   (map (lambda (x) (string-append suffix x))
        xs))
 
-;(define (list-nth-mod xs n))
+(define (list-nth-mod xs n)
+  (cond [(< n 0) (error "list-nth-mod: negative number")]
+        [(null? xs) (error "list-nth-mod: empty list")]
+        [(let ([ith (remainder n (length xs))])
+           (car (list-tail xs ith)))]))
 
-;(define (stream-for-n-steps s n))
+(define (stream-for-n-steps s n)
+  (if (<= n 0)
+      null
+      (let ([pr (s)])
+        (cons (car pr) (stream-for-n-steps (cdr pr) (- n 1))))))
 
-;(define (funny-number-stream))
+(define funny-number-stream
+  (letrec ([f (lambda (x)
+                (let ([t (if (= 0 (remainder x 5))
+                             (- x)
+                             x)])
+                  (cons t (lambda() (f (+ x 1))))))])
+    (lambda() (f 1))))
 
-;(define (dan-then-dog))
+(define dan-then-dog
+  (letrec ([f (lambda (x)
+                (let ([t (if (odd? x) "dan.jpg" "dog.jpg")])
+                  (cons t (lambda() (f (+ x 1))))))])
+    (lambda() (f 1))))
 
-;(define (stream-add-zero))
+(define (stream-add-zero s)
+  (letrec ([f (lambda (stream)
+                  (let ([t (stream)])
+                    (cons (cons 0 (car t)) (lambda() (f (cdr t))))))])
+    (lambda() (f s))))
 
-;(define (cycle-lists xs ys))
+(define (cycle-lists xs ys)
+  (letrec ([f (lambda (n)
+                (let ([pr (cons (list-nth-mod xs n) (list-nth-mod ys n))])
+                  (cons pr (lambda() (f (+ n 1))))))])
+    (lambda () (f 0))))
 
-;(define (vector-assoc v vec))
-
-;(define (cached-assoc xs n))
+(define (vector-assoc v vec)

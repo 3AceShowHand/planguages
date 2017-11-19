@@ -252,7 +252,10 @@
 ; 1 1 1 1 1 1 1
 (define ones (lambda() (cons 1 ones)))
 
-(define (f3 x) (cons x (lambda () (f (+ x 1)))))
+; 1 2 3 4 5
+(define (f3 x) (cons x (lambda () (f3 (+ x 1)))))
+;(define nats (lambda() (f3 1)))
+
 (define nats
   (letrec ([f (lambda (x) (cons x (lambda() (f (+ x 1)))))])
     (lambda() (f 1))))
@@ -260,7 +263,11 @@
 ; 2 4 8 16 ...
 (define powers-of-two
   (letrec ([f (lambda (x) (cons x (lambda() (f (* x 2)))))])
-    (lambda() (f 1))))
+    (lambda() (f 2))))
+
+;(car (powers-of-two))
+;(car ((cdr (powers-of-two))))
+;(car ((cdr ((cdr (powers-of-two))))))
 
 (define (number-until stream tester)
   (letrec ([f (lambda (stream ans)

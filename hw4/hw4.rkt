@@ -11,7 +11,7 @@
         [(cons low (sequence (+ low stride) high stride))]))
 
 (define (string-append-map xs suffix)
-  (map (lambda (x) (string-append suffix x))
+  (map (lambda (x) (string-append x suffix))
        xs))
 
 (define (list-nth-mod xs n)
@@ -53,3 +53,35 @@
     (lambda () (f 0))))
 
 (define (vector-assoc v vec)
+  (letrec ([f (lambda (n)
+                (if (= n (vector-length vec))
+                    #f
+                    (let ([t (vector-ref vec n)])
+                      (cond [(not (pair? t)) (f (+ n 1))]
+                            [(equal? (car t) v) t]
+                            [(f (+ n 1))]))))])
+    (f 0)))
+
+(define (cached-assoc xs n)
+  (letrec ([memo (make-vector n #f)]
+           [slot 0]
+           [f (lambda (v)
+                (let ([ans (vector-assoc v memo)])
+                  (if ans
+                      ans
+                      (let ([new-ans (assoc v xs)])
+                        (if new-ans
+                            (begin
+                              (vector-set! memo slot new-ans)
+                              (set! slot (remainder (+ slot 1) n))
+                              new-ans)
+                            new-ans)))))])
+    f))
+                              
+                        
+           
+
+                    
+      
+  
+  

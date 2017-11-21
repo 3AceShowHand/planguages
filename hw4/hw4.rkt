@@ -57,10 +57,19 @@
                 (if (= n (vector-length vec))
                     #f
                     (let ([t (vector-ref vec n)])
-                      (cond [(not (pair? t)) (f (+ n 1))]
-                            [(equal? (car t) v) t]
-                            [(f (+ n 1))]))))])
+                      (cond [(and (pair? t) (equal? (car t) v)) t]
+                            [#t (f (+ n 1))]))))])
     (f 0)))
+
+(define (vector-assoc2 v vec)
+         (letrec  ([len (vector-length vec)]
+                   [f (lambda(current)
+                     (cond[(= current len) #f]
+                          [(pair? (vector-ref vec current)) (if (equal? (car (vector-ref vec current)) v)
+                                                                (vector-ref vec current)
+                                                                (f (+ current 1)))]
+                          [#t (f (+ current 1))]))])
+         (f 0)))
 
 (define (cached-assoc xs n)
   (letrec ([memo (make-vector n #f)]

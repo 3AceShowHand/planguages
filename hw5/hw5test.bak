@@ -1,0 +1,138 @@
+#lang racket
+;; Programming Languages Homework 5 Simple Test
+;; Save this file to the same directory as your homework file
+;; These are basic tests. Passing these tests does not guarantee that your code will pass the actual homework grader
+
+;; Be sure to put your homework file in the same folder as this test file.
+;; Uncomment the line below and, if necessary, change the filename
+(require "hw5.rkt")
+
+(require rackunit)
+
+(define tests
+  (test-suite
+   "Sample tests for Assignment 5"
+   
+   ;; check racketlist to mupllist with normal list
+   (check-equal? (racketlist->mupllist (list (int 3) (int 4))) (apair (int 3) (apair (int 4) (aunit))) "racketlist->mupllist test")
+   
+   ;; check mupllist to racketlist with normal list
+   (check-equal? (mupllist->racketlist (apair (int 3) (apair (int 4) (aunit)))) (list (int 3) (int 4)) "racketlist->mupllist test")
+
+   ;; tests if ifgreater returns (int 2)
+   (check-equal? (eval-exp (ifgreater (int 3) (int 4) (int 3) (int 2))) (int 2) "ifgreater test")
+   
+   ;; mlet test
+   (check-equal? (eval-exp (mlet "x" (int 1) (add (int 5) (var "x")))) (int 6) "mlet test")
+   
+   ;; call test
+   (check-equal? (eval-exp (call (closure '() (fun #f "x" (add (var "x") (int 7)))) (int 1))) (int 8) "call test")
+   
+   ;;snd test
+   (check-equal? (eval-exp (snd (apair (int 1) (int 2)))) (int 2) "snd test")
+   
+   ;; isaunit test
+   (check-equal? (eval-exp (isaunit (closure '() (fun #f "x" (aunit))))) (int 0) "isaunit test")
+   
+   ;; ifaunit test
+   (check-equal? (eval-exp (ifaunit (int 1) (int 2) (int 3))) (int 3) "ifaunit test")
+   
+   ;; mlet* test
+   (check-equal? (eval-exp (mlet* (list (cons "x" (int 10))) (var "x"))) (int 10) "mlet* test")
+   
+   ;; ifeq test
+   (check-equal? (eval-exp (ifeq (int 1) (int 2) (int 3) (int 4))) (int 4) "ifeq test")
+   
+   ;; mupl-map test
+   (check-equal? (eval-exp (call (call mupl-map (fun #f "x" (add (var "x") (int 7)))) (apair (int 1) (aunit)))) 
+                 (apair (int 8) (aunit)) "mupl-map test")
+   
+   ;; problems 1, 2, and 4 combined test
+   (check-equal? (mupllist->racketlist
+   (eval-exp (call (call mupl-mapAddN (int 7))
+                   (racketlist->mupllist 
+                    (list (int 3) (int 4) (int 9)))))) (list (int 10) (int 11) (int 16)) "combined test")
+   
+   ))
+
+(require rackunit/text-ui)
+;; runs the test
+(run-tests tests)
+
+[(call? e)
+         (let ([v1 (eval-under-env (call-funexp e) env)]
+               [v2 (eval-under-env (call-actual e) env)])
+           (if (closure? v1)
+               (let ([env (closure-env v1)]
+                     [fun (closure-fun v1)]
+                     [nameopt (cons (fun-nameopt fun) v1)]
+                     [formal (cons (fun-formal fun) v2)])
+                 (let ([eval-env (if (eq? (car nameopt) #f)
+                                     (cons formal env)
+                                     (cons formal (cons nameopt env)))])
+                   (eval-under-env (fun-body fun) eval-env)))
+               (error "MUPL call applied to non-closure")))]
+
+
+
+  
+(define (eval-under-env e env)
+  (cond [(var? e) 
+         (envlookup env (var-string e))]
+        [(add? e) 
+         (let ([v1 (eval-under-env (add-e1 e) env)]
+               [v2 (eval-under-env (add-e2 e) env)])
+           (if (and (int? v1)
+                    (int? v2))
+               (int (+ (int-num v1) 
+                       (int-num v2)))
+               (error "MUPL addition applied to non-number")))]
+        [(int? e) e]
+        [(ifgreater? e) 
+         (let ([v1 (eval-under-env (ifgreater-e1 e) env)]
+               [v2 (eval-under-env (ifgreater-e2 e) env)])
+           (if (and (int? v1)
+                    (int? v2))
+               (if (> (int-num v1)
+                      (int-num v2))
+                   (eval-under-env (ifgreater-e3 e) env)
+                   (eval-under-env (ifgreater-e4 e) env))
+               (error "MUPL ifgreater applied to non-number")))]
+        [(fun? e) (closure env e)]
+        [(call? e) 
+         (let ([v1 (eval-under-env (call-funexp e) env)]
+               [v2 (eval-under-env (call-actual e) env)])
+           (if (closure? v1)
+               (let* ([c1 (closure-fun v1)]
+                     [c2 (closure-env v1)]
+                     [cn (cons (fun-nameopt c1) v1)]
+                     [cf (cons (fun-formal c1) v2)])
+                 (eval-under-env 
+                  (fun-body c1)
+                  (if (eq? (car cn) #f)
+                      (cons cf c2)
+                      (cons cf (cons cn c2)))))
+               (error "MUPL call applied to non-closure")))]
+        [(mlet? e)
+         (let ([v1 (eval-under-env (mlet-e e) env)])
+           (eval-under-env (mlet-body e) (cons (cons (mlet-var e) v1) env)))]
+        [(apair? e) (apair
+                     (eval-under-env (apair-e1 e) env)
+                     (eval-under-env (apair-e2 e) env))]
+        [(fst? e)
+         (let ([v1 (eval-under-env (fst-e e) env)])
+           (if (apair? v1)
+               (apair-e1 v1)
+               (error "MUPL fst applied to non-pair")))]
+        [(snd? e)
+         (let ([v1 (eval-under-env (snd-e e) env)])
+           (if (apair? v1)
+               (apair-e2 v1)
+               (error "MUPL snd applied to non-pair")))]
+        [(aunit? e) e]
+        [(isaunit? e) 
+         (if (aunit? (eval-under-env (isaunit-e e) env))
+             (int 1)
+             (int 0))]
+        [(closure? e) e]
+        [#t (begin (print e) (error "bad MUPL expression"))]))

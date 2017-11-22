@@ -62,6 +62,7 @@
                    (eval-under-env (ifgreater-e4 e) env))
                (error "MUPL ifgreater applied to non-number")))]
         [(fun? e) (closure env e)]
+        ; Add (var , evaluated e) to env, and then evaluate the body of mlet
         [(mlet? e)
          (let ([v1 (eval-under-env (mlet-e e) env)])
            (eval-under-env (mlet-body e) (cons (cons (mlet-var e) v1) env)))]
@@ -84,20 +85,27 @@
            (if (aunit? v)
                (int 1)
                (int 0)))]
+
+        ;(call (closure
+        ;      '()
+        ;      (fun #f "x" (add (var "x") (int 7))))
+;
+        ;      (int 1))
         [(call? e) 
          (let ([closure (eval-under-env (call-funexp e) env)]
                [value (eval-under-env (call-actual e) env)])
            (if (closure? closure)
-               (let ([env (closure-env closure)]
-                     [fun (closure-fun fun)]
-                     [nameopt (cons (fun-nameopt fun) closure)]
-                     [formal (cons (fun-formal fun) value)]
+               (let* ([env (closure-env closure)]
+                     [fun (closure-fun closure)]
+                     [nameopt (cons (fun-nameopt fun) closure)] ;bind the name and closure together, which would be used later
+                     [formal (cons (fun-formal fun) value)] ; bind the parameter and value together, which would be used later.
                      [body (fun-body fun)])
                  (let ([eval-env (if (eq? (car nameopt) #f)
-                                     (cons formal fun)
-                                     (cons formal (cons nameopt fun)))])
+                                     (cons formal env)      ; add (parameter, value) pair to env
+                                     (cons formal (cons nameopt env)))])
                    (eval-under-env (fun-body fun) eval-env)))
                (error "MUPL call applied to non-closure")))]
+        [(aunit? e) e]
         [(closure? e) e]
         [#t (error (format "bad MUPL expression: ~v" e))]))
 
@@ -118,7 +126,7 @@
 (define (ifeq e1 e2 e3 e4)
   (let ([pr1 (cons "_x" e1)]
         [pr2 (cons "_y" e2)])
-    (mlet* (list pr1 pr2) (ifgreater (var "_x") (var "y") (ifgreater (var "_y") (var "_x") e4 e3)))))
+    (mlet* (list pr1 pr2) (ifgreater (var "_x") (var "_y") e4 (ifgreater (var "_y") (var "_x") e4 e3)))))
 
 ;; Problem 4
 

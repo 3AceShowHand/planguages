@@ -85,20 +85,19 @@
                (int 1)
                (int 0)))]
         [(call? e) 
-         (let ([v1 (eval-under-env (call-funexp e) env)]
-               [v2 (eval-under-env (call-actual e) env)])
-           (if (closure? v1)
-               (let ([env (closure-env v1)]
-                     [fun (closure-fun v1)]
-                     [nameopt (cons (fun-nameopt fun) v1)]
-                     [formal (cons (fun-formal fun) v2)]
+         (let ([closure (eval-under-env (call-funexp e) env)]
+               [value (eval-under-env (call-actual e) env)])
+           (if (closure? closure)
+               (let ([env (closure-env closure)]
+                     [fun (closure-fun fun)]
+                     [nameopt (cons (fun-nameopt fun) closure)]
+                     [formal (cons (fun-formal fun) value)]
                      [body (fun-body fun)])
                  (let ([eval-env (if (eq? (car nameopt) #f)
                                      (cons formal fun)
                                      (cons formal (cons nameopt fun)))])
-                   (eval-under-env (fun-body v1) eval-env)))
+                   (eval-under-env (fun-body fun) eval-env)))
                (error "MUPL call applied to non-closure")))]
-            
         [(closure? e) e]
         [#t (error (format "bad MUPL expression: ~v" e))]))
 
@@ -107,21 +106,35 @@
   (eval-under-env e null))
         
 ;; Problem 3
-
 (define (ifaunit e1 e2 e3)
   (ifgreater (isaunit e1) (int 0) e2 e3))
 
-(define (mlet* lstlst e2) "CHANGE")
+(define (mlet* lstlst e2)
+  (if (null? lstlst)
+      e2
+      (let ([pr (car lstlst)])
+        (mlet (car pr) (cdr pr) (mlet* (cdr lstlst) e2)))))
 
-(define (ifeq e1 e2 e3 e4) "CHANGE")
+(define (ifeq e1 e2 e3 e4)
+  (let ([pr1 (cons "_x" e1)]
+        [pr2 (cons "_y" e2)])
+    (mlet* (list pr1 pr2) (ifgreater (var "_x") (var "y") (ifgreater (var "_y") (var "_x") e4 e3)))))
 
 ;; Problem 4
 
-(define mupl-map "CHANGE")
-
+(define mupl-map
+  (fun #f "formal"
+       (fun "loop" "lst"
+            (ifaunit (var "lst")
+                     (aunit)
+                     (apair (call (var "formal") (fst (var "lst")))
+                            (call (var "loop") (snd (var "lst"))))))))
+            
+       
 (define mupl-mapAddN 
   (mlet "map" mupl-map
-        "CHANGE (notice map is now in MUPL scope)"))
+        (fun #f "i"
+             (call (var "map") (fun #f "x" (add (var "x") (var "i")))))))
 
 ;; Challenge Problem
 

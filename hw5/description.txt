@@ -1,7 +1,0 @@
-If the first is not a closure, it is an error. 
-Else, it evaluates the closure's function's body in the closure's environment extended to map
-the function's name to the closure (unless the name field is #f) 
-and the function's argument-name (i.e., the parameter name) to the result of the second subexpression.
-
-Then it evaluates the second expression to a value, 
-in an environment extended to map the name in the mlet expression to v.

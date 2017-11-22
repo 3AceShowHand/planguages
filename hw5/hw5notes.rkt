@@ -90,6 +90,7 @@
 
 ; Implementing Variables and Environments
 ; An environment is a mapping from variables(Racket strings) to values(as defined by the language)
+; Only ever put pairs of strings and values in the environment
 ; Evaluation takes place in an environment
 ;   Env passed as arugment to interpreter helper function
 ;   A variable expression looks up the variable in the env
